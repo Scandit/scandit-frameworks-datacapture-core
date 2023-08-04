@@ -1,0 +1,11 @@
+/*
+ * This file is part of the Scandit Data Capture SDK
+ *
+ * Copyright (C) 2023- Scandit AG. All rights reserved.
+ */
+
+public protocol FrameworksResult {
+    func success(result: Any?)
+    func reject(code: String, message: String?, details: Any?)
+    func reject(error: Error)
+}

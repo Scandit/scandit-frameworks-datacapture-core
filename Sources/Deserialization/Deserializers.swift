@@ -1,0 +1,76 @@
+/*
+ * This file is part of the Scandit Data Capture SDK
+ *
+ * Copyright (C) 2023- Scandit AG. All rights reserved.
+ */
+
+import Foundation
+import ScanditCaptureCore
+
+public final class Deserializers {
+
+    public final class Factory {
+        private init() {}
+
+        private static var modeDeserializers: [DataCaptureModeDeserializer] = []
+        private static var componentDeserializers: [DataCaptureComponentDeserializer] = []
+
+        public static func add(_ modeDeserializer: DataCaptureModeDeserializer) {
+            if let _ = modeDeserializers.firstIndex(where: { $0 === modeDeserializer }) {
+                return
+            }
+            modeDeserializers.append(modeDeserializer)
+        }
+
+        public static func add(_ componentDeserializer: DataCaptureComponentDeserializer) {
+            if let _ = componentDeserializers.firstIndex(where: { $0 === componentDeserializer }) {
+                return
+            }
+            componentDeserializers.append(componentDeserializer)
+        }
+
+        public static func remove(_ modeDeserializer: DataCaptureModeDeserializer) {
+            if let indexToRemove = modeDeserializers.firstIndex(where: { $0 === modeDeserializer }) {
+                modeDeserializers.remove(at: indexToRemove)
+            }
+        }
+
+        public static func remove(_ componentDeserializer: DataCaptureComponentDeserializer) {
+            if let indexToRemove = componentDeserializers.firstIndex(where: { $0 === componentDeserializer }) {
+                componentDeserializers.remove(at: indexToRemove)
+            }
+        }
+
+        public static func clearDeserializers() {
+            modeDeserializers.removeAll()
+            componentDeserializers.removeAll()
+        }
+
+        public static func create(frameSourceDeserializerDelegate: FrameSourceDeserializerDelegate) -> Deserializers {
+            return Deserializers(modeDeserializers: modeDeserializers,
+                                 componentDeserializers: componentDeserializers,
+                                 frameSourceDeserializerDelegate: frameSourceDeserializerDelegate)
+        }
+    }
+
+    private let modeDeserializers: [DataCaptureModeDeserializer]
+    private let componentDeserializers: [DataCaptureComponentDeserializer]
+    private let frameSourceDeserializer: FrameSourceDeserializer
+    private let dataCaptureViewDeserializer: DataCaptureViewDeserializer
+    let dataCaptureContextDeserializer: DataCaptureContextDeserializer
+
+    fileprivate init(modeDeserializers: [DataCaptureModeDeserializer],
+                     componentDeserializers: [DataCaptureComponentDeserializer],
+                     frameSourceDeserializerDelegate: FrameSourceDeserializerDelegate) {
+        self.modeDeserializers = modeDeserializers
+        self.componentDeserializers = componentDeserializers
+        frameSourceDeserializer = FrameSourceDeserializer(modeDeserializers: modeDeserializers)
+        frameSourceDeserializer.delegate = frameSourceDeserializerDelegate
+        dataCaptureViewDeserializer = DataCaptureViewDeserializer(modeDeserializers: modeDeserializers)
+        dataCaptureContextDeserializer = DataCaptureContextDeserializer(frameSourceDeserializer: frameSourceDeserializer,
+                                                                        viewDeserializer: dataCaptureViewDeserializer,
+                                                                        modeDeserializers: modeDeserializers,
+                                                                        componentDeserializers: componentDeserializers)
+        dataCaptureContextDeserializer.avoidThreadDependencies = true
+    }
+}
