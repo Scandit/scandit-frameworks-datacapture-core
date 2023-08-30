@@ -18,5 +18,5 @@ Pod::Spec.new do |s|
   s.module_name             = "ScanditFrameworksCore"
   s.header_dir              = "ScanditFrameworksCore"
 
-  s.dependency 'ScanditCaptureCore', '= 6.19.0-beta.0'
+  s.dependency 'ScanditCaptureCore', '= 6.19.0-beta.1'
 end
