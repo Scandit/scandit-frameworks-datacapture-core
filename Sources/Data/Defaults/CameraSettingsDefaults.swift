@@ -21,7 +21,12 @@
             "focusRange": cameraSettings.focusRange.jsonString,
             "focusGestureStrategy": cameraSettings.focusGestureStrategy.jsonString,
             "zoomGestureZoomFactor": cameraSettings.zoomGestureZoomFactor,
-            "shouldPreferSmoothAutoFocus": cameraSettings.shouldPreferSmoothAutoFocus
+            "shouldPreferSmoothAutoFocus": cameraSettings.shouldPreferSmoothAutoFocus,
+            "properties": [
+                "exposureTargetBias": cameraSettings.value(forProperty: "exposureTargetBias"),
+                "focusStrategy": cameraSettings.value(forProperty: "focusStrategy"),
+                "scanPhaseNoSreTimeout": cameraSettings.value(forProperty: "scanPhaseNoSreTimeout"),
+            ]
          ]
      }
  }
