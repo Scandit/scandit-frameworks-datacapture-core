@@ -8,14 +8,12 @@ import Foundation
 import ScanditCaptureCore
 
 struct SpotlightViewfinderDefaults: DefaultsEncodable {
-    let viewfinder: SpotlightViewfinder
-
     func toEncodable() -> [String: Any?] {
         [
-            "size": viewfinder.sizeWithUnitAndAspect.jsonString,
-            "enabledBorderColor": viewfinder.enabledBorderColor.sdcHexString,
-            "disabledBorderColor": viewfinder.disabledBorderColor.sdcHexString,
-            "backgroundColor": viewfinder.backgroundColor.sdcHexString
+            "size": "{\"height\":{\"unit\":\"fraction\",\"value\":0.32499998807907104},\"width\":{\"unit\":\"fraction\",\"value\":0.800000011920929}}",
+            "enabledBorderColor": "ffffffff",
+            "disabledBorderColor": "ffffffff",
+            "backgroundColor": "0000007f"
         ]
     }
 }

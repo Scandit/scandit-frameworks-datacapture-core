@@ -110,6 +110,6 @@ struct CoreDefaults: DefaultsEncodable {
                             rectangularViewfinderDefaults: rectangularViewfinderDefaults,
                             aimerViewfinderDefauls: EncodableAimerViewfinder(viewfinder: AimerViewfinder()),
                             brushDefaults: EncodableBrush(brush: .transparent),
-                            spotlightViewfinderDefaults: SpotlightViewfinderDefaults(viewfinder: SpotlightViewfinder()))
+                            spotlightViewfinderDefaults: SpotlightViewfinderDefaults())
     }()
 }
