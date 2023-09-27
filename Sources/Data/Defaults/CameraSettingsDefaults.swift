@@ -3,10 +3,10 @@
  *
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
- 
+
  import Foundation
  import ScanditCaptureCore
- 
+
  public struct CameraSettingsDefaults: DefaultsEncodable {
      private let cameraSettings: CameraSettings
 
@@ -22,11 +22,7 @@
             "focusGestureStrategy": cameraSettings.focusGestureStrategy.jsonString,
             "zoomGestureZoomFactor": cameraSettings.zoomGestureZoomFactor,
             "shouldPreferSmoothAutoFocus": cameraSettings.shouldPreferSmoothAutoFocus,
-            "properties": [
-                "exposureTargetBias": cameraSettings.value(forProperty: "exposureTargetBias"),
-                "focusStrategy": cameraSettings.value(forProperty: "focusStrategy"),
-                "scanPhaseNoSreTimeout": cameraSettings.value(forProperty: "scanPhaseNoSreTimeout"),
-            ]
+            "properties": CameraSettingsPropertiesDefaults(cameraSettings: cameraSettings).toEncodable()
          ]
      }
  }
