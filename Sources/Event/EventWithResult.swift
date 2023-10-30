@@ -6,16 +6,18 @@
 
 import Foundation
 
+public let defaultTimeoutInterval: TimeInterval = 2.0
+
 public class EventWithResult<T> {
     private let event: Event
-    private let timeout: TimeInterval
+    public var timeout: TimeInterval
 
     private var result: T?
 
     let condition = NSCondition()
     var isCallbackFinished = true
 
-    public init(event: Event, timeout: TimeInterval = 2.0) {
+    public init(event: Event, timeout: TimeInterval = defaultTimeoutInterval) {
         self.event = event
         self.timeout = timeout
     }
