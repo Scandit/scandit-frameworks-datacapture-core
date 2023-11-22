@@ -3,10 +3,10 @@
  *
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
- 
+
  import Foundation
  import ScanditCaptureCore
- 
+
  public struct CameraSettingsDefaults: DefaultsEncodable {
      private let cameraSettings: CameraSettings
 

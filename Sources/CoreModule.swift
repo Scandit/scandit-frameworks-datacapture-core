@@ -66,7 +66,6 @@ public class CoreModule: NSObject, FrameworkModule {
     private let frameSourceListener: FrameworksFrameSourceListener
     private let dataCaptureContextListener: FrameworksDataCaptureContextListener
     private let dataCaptureViewListener: FrameworksDataCaptureViewListener
-    private let contextLock = DispatchSemaphore(value: 1)
 
     public init(frameSourceDeserializer: FrameworksFrameSourceDeserializer,
                 frameSourceListener: FrameworksFrameSourceListener,
@@ -113,14 +112,8 @@ public class CoreModule: NSObject, FrameworkModule {
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
                 return
             }
-            if (self.dataCaptureContext != nil) {
-                self.disposeContext()
-            }
-
+            self.disposePreviousContext()
             do {
-                self.contextLock.wait()
-                defer { self.contextLock.signal() }
-
                 let deserializerResult = try self.deserializers.dataCaptureContextDeserializer.context(fromJSONString: json)
                 self.dataCaptureContext = deserializerResult.context
                 self.dataCaptureView = deserializerResult.view
@@ -147,9 +140,6 @@ public class CoreModule: NSObject, FrameworkModule {
             }
             DeserializationLifeCycleDispatcher.shared.dispatchParsersRemoved()
             do {
-                self.contextLock.wait()
-                defer { self.contextLock.signal() }
-
                 let updateResult = try self.deserializers.dataCaptureContextDeserializer.update(dataCaptureContext,
                                                                                                 view: self.dataCaptureView,
                                                                                                 components: [],
@@ -253,10 +243,6 @@ public class CoreModule: NSObject, FrameworkModule {
     }
 
     public func disposeContext() {
-        self.contextLock.wait()
-        defer { self.contextLock.signal() }
-
-        dataCaptureContext?.dispose()
         dataCaptureContext = nil
         frameSourceDeserializer.releaseCurrentCamera()
         LastFrameData.shared.frameData = nil
@@ -291,5 +277,11 @@ public class CoreModule: NSObject, FrameworkModule {
 
     public func unregisterFrameSourceListener() {
         frameSourceListener.disable()
+    }
+
+    private func disposePreviousContext() {
+        dataCaptureContext?.dispose()
+        dataCaptureContext = nil
+        frameSourceDeserializer.releaseCurrentCamera()
     }
 }
