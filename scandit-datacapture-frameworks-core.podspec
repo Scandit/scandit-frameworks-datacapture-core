@@ -13,5 +13,7 @@ Pod::Spec.new do |s|
     s.module_name             = 'ScanditFrameworksCore'
     s.header_dir              = 'ScanditFrameworksCore'
 
+    s.user_target_xcconfig = { "GENERATE_INFOPLIST_FILE" => "YES" }
+
     s.dependency 'ScanditCaptureCore', '= 6.20.1'
 end
