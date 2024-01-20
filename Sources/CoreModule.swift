@@ -116,11 +116,11 @@ public class CoreModule: NSObject, FrameworkModule {
             if (self.dataCaptureContext != nil) {
                 self.disposeContext()
             }
-                
+
             do {
                 self.contextLock.wait()
                 defer { self.contextLock.signal() }
-    
+
                 let deserializerResult = try self.deserializers.dataCaptureContextDeserializer.context(fromJSONString: json)
                 self.dataCaptureContext = deserializerResult.context
                 self.dataCaptureView = deserializerResult.view
@@ -149,7 +149,7 @@ public class CoreModule: NSObject, FrameworkModule {
             do {
                 self.contextLock.wait()
                 defer { self.contextLock.signal() }
-                
+
                 let updateResult = try self.deserializers.dataCaptureContextDeserializer.update(dataCaptureContext,
                                                                                                 view: self.dataCaptureView,
                                                                                                 components: [],
@@ -255,7 +255,7 @@ public class CoreModule: NSObject, FrameworkModule {
     public func disposeContext() {
         self.contextLock.wait()
         defer { self.contextLock.signal() }
-        
+
         dataCaptureContext?.dispose()
         dataCaptureContext = nil
         frameSourceDeserializer.releaseCurrentCamera()
@@ -267,6 +267,7 @@ public class CoreModule: NSObject, FrameworkModule {
 
     public func didStop() {
         Deserializers.Factory.clearDeserializers()
+        disposeContext()
     }
 
     public func registerDataCaptureContextListener() {
