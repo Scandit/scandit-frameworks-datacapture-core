@@ -9,6 +9,7 @@ import ScanditCaptureCore
 public class FrameworksFrameSourceDeserializer: NSObject {
     private let frameSourceListener: FrameSourceListener
     private let torchListener: TorchListener
+    private var cameraDesiredState: FrameSourceState = FrameSourceState.off
 
     public init(frameSourceListener: FrameSourceListener, torchListener: TorchListener) {
         self.frameSourceListener = frameSourceListener
@@ -39,6 +40,12 @@ public class FrameworksFrameSourceDeserializer: NSObject {
         camera = nil
         imageFrameSource = nil
     }
+
+    public func switchCameraToState(newState: FrameSourceState) {
+        self.cameraDesiredState = newState
+        camera?.switch(toDesiredState: newState)
+        imageFrameSource?.switch(toDesiredState: newState)
+    }
 }
 
 extension FrameworksFrameSourceDeserializer: FrameSourceDeserializerDelegate {
@@ -56,23 +63,13 @@ extension FrameworksFrameSourceDeserializer: FrameSourceDeserializerDelegate {
                 SDCTorchStateFromJSONString(jsonValue.string(forKey: "desiredTorchState"), &torchState)
                 camera.desiredTorchState = torchState
             }
-            if jsonValue.containsKey("desiredState") {
-                var desiredState: FrameSourceState = .off
-                SDCFrameSourceStateFromJSONString(jsonValue.string(forKey: "desiredState"), &desiredState)
-                camera.switch(toDesiredState: desiredState)
-            }
+            camera.switch(toDesiredState: cameraDesiredState)
             self.camera = camera
         } else {
             guard let imageFrameSource = frameSource as? ImageFrameSource else {
             	return
             }
-            if jsonValue.containsKey("desiredState") {
-                let desiredStateJson = jsonValue.string(forKey: "desiredState")
-                var desiredState = FrameSourceState.on
-                if SDCFrameSourceStateFromJSONString(desiredStateJson, &desiredState) {
-                    imageFrameSource.switch(toDesiredState: desiredState)
-                }
-            }
+            imageFrameSource.switch(toDesiredState: cameraDesiredState)
             self.imageFrameSource = imageFrameSource
         }
     }
