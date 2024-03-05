@@ -1,0 +1,16 @@
+PODS:
+  - scandit-datacapture-frameworks-core (6.23.0-beta.1-SNAPSHOT)
+
+DEPENDENCIES:
+  - scandit-datacapture-frameworks-core (from `../`)
+
+EXTERNAL SOURCES:
+  scandit-datacapture-frameworks-core:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  scandit-datacapture-frameworks-core: f14cec128f938928cba85f5257a0d2ec4d303a3d
+
+PODFILE CHECKSUM: df6ecaf6d05485fc4690ea68323d9d422c92acf3
+
+COCOAPODS: 1.12.1
