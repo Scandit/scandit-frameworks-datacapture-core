@@ -17,15 +17,15 @@ public func dispatchMain(_ block: @escaping () -> Void) {
 }
 
 @discardableResult
-public func dispatchMainSync<T>(_ block: () throws -> T) rethrows -> T {
+public func dispatchMainSync<T>(_ block: () -> T) -> T {
     if Thread.isMainThread {
-        return try block()
+        return block()
     }
-    return try dispatchMainSyncUnsafe(block)
+    return dispatchMainSyncUnsafe(block)
 }
 
-public func dispatchMainSyncUnsafe<T>(_ block: () throws -> T) rethrows -> T {
-    return try DispatchQueue.main.sync {
-        return try block()
+public func dispatchMainSyncUnsafe<T>(_ block: () -> T) -> T {
+    return DispatchQueue.main.sync {
+        return block()
     }
 }
