@@ -35,4 +35,29 @@ public final class LastFrameData {
             frameData?.jsonString
         })
     }
+    
+    public func getLastFrameDataBytes(result: @escaping ([String: Any?]?) -> Void) {
+        result(queue.sync {
+            frameData?.toEncodable()
+        })
+    }
+}
+
+private extension FrameData {
+    func toEncodable() -> [String: Any?] {
+        return  [
+            "imageBuffers": self.imageBuffers.compactMap { $0.toEncodable() },
+            "orientation": 90,
+        ]
+    }
+}
+
+private extension ImageBuffer {
+    func toEncodable() -> [String: Any?] {
+        return  [
+            "width": self.width,
+            "height": self.height,
+            "data": self.image?.pngData()
+        ]
+    }
 }
