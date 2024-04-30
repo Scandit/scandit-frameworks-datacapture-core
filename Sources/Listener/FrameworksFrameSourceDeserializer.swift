@@ -6,7 +6,7 @@
 
 import ScanditCaptureCore
 
-public class FrameworksFrameSourceDeserializer: NSObject {
+open class FrameworksFrameSourceDeserializer: NSObject {
     private let frameSourceListener: FrameSourceListener
     private let torchListener: TorchListener
     private var cameraDesiredState: FrameSourceState = FrameSourceState.off
