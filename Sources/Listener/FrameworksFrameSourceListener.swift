@@ -6,7 +6,7 @@
 
 import ScanditCaptureCore
 
-open class FrameworksFrameSourceListener: NSObject {
+public class FrameworksFrameSourceListener: NSObject {
     private let eventEmitter: Emitter
     private let frameSourceStateChangedEvent = Event(.frameSourceStateChanged)
     private let torchStateChangedEvent = Event(.torchStateChanged)

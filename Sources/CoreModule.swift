@@ -61,7 +61,7 @@ public enum ScanditFrameworksCoreError: Error, CustomNSError {
     }
 }
 
-open class CoreModule: NSObject, FrameworkModule {
+public class CoreModule: NSObject, FrameworkModule {
     private let frameSourceDeserializer: FrameworksFrameSourceDeserializer
     private let frameSourceListener: FrameworksFrameSourceListener
     private let dataCaptureContextListener: FrameworksDataCaptureContextListener

@@ -10,12 +10,6 @@ public protocol FrameworksResult {
     func reject(error: Error)
 }
 
-public extension FrameworksResult {
-    func success() {
-        success(result: nil)
-    }
-}
-
 public class NoopFrameworksResult : FrameworksResult {
     public init() {
     }
