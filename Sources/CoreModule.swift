@@ -61,7 +61,7 @@ public enum ScanditFrameworksCoreError: Error, CustomNSError {
     }
 }
 
-public class CoreModule: NSObject, FrameworkModule {
+open class CoreModule: NSObject, FrameworkModule {
     private let frameSourceDeserializer: FrameworksFrameSourceDeserializer
     private let frameSourceListener: FrameworksFrameSourceListener
     private let dataCaptureContextListener: FrameworksDataCaptureContextListener
@@ -376,6 +376,7 @@ public class CoreModule: NSObject, FrameworkModule {
             do {
                 let view = try deserializers.dataCaptureViewDeserializer.view(fromJSONString: viewJson, with: dcContext)
                 onViewDeserialized(view)
+                result.success(result: nil)
                 return view
             } catch {
                 result.reject(error: error)
