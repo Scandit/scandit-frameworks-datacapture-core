@@ -6,7 +6,7 @@
 
 import ScanditCaptureCore
 
-open class FrameworksDataCaptureViewListener: NSObject {
+public class FrameworksDataCaptureViewListener: NSObject {
     private let event = Event(.dataCaptureViewSizeChanged)
     private let eventEmitter: Emitter
 
