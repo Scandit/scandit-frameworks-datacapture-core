@@ -6,7 +6,7 @@
 
 import ScanditCaptureCore
 
-public class FrameworksDataCaptureContextListener: NSObject {
+open class FrameworksDataCaptureContextListener: NSObject {
 
     private let eventEmitter: Emitter
     private let observationStartedEvent = Event(.contextObservingStarted)
