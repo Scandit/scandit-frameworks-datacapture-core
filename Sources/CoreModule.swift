@@ -322,8 +322,13 @@ open class CoreModule: NSObject, FrameworkModule {
     public func switchCameraToDesiredState(stateJson: String, result: FrameworksResult) {
         var state = FrameSourceState.off
         SDCFrameSourceStateFromJSONString(stateJson, &state)
-        frameSourceDeserializer.switchCameraToState(newState: state)
-        result.success(result: nil)
+        frameSourceDeserializer.switchCameraToState(newState: state) { success in
+            if (success) {
+                result.success(result: nil)
+            } else {
+                result.reject(code: "-1", message: "Unable to switch the camera to \(stateJson).", details: nil)
+            }
+        }
     }
     
     public func addModeToContext(modeJson: String, result: FrameworksResult) {
