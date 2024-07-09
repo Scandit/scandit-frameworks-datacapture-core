@@ -6,7 +6,7 @@
 
 import ScanditCaptureCore
 
-open class FrameworksFrameSourceDeserializer: NSObject {
+public class FrameworksFrameSourceDeserializer: NSObject {
     private let frameSourceListener: FrameSourceListener
     private let torchListener: TorchListener
     private var cameraDesiredState: FrameSourceState = FrameSourceState.off
@@ -41,10 +41,10 @@ open class FrameworksFrameSourceDeserializer: NSObject {
         imageFrameSource = nil
     }
 
-    public func switchCameraToState(newState: FrameSourceState, completionHandler: ((Bool) -> Void)?) {
+    public func switchCameraToState(newState: FrameSourceState) {
         self.cameraDesiredState = newState
-        camera?.switch(toDesiredState: newState, completionHandler: completionHandler)
-        imageFrameSource?.switch(toDesiredState: newState, completionHandler: completionHandler)
+        camera?.switch(toDesiredState: newState)
+        imageFrameSource?.switch(toDesiredState: newState)
     }
 }
 

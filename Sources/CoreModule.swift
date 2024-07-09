@@ -61,7 +61,7 @@ public enum ScanditFrameworksCoreError: Error, CustomNSError {
     }
 }
 
-open class CoreModule: NSObject, FrameworkModule {
+public class CoreModule: NSObject, FrameworkModule {
     private let frameSourceDeserializer: FrameworksFrameSourceDeserializer
     private let frameSourceListener: FrameworksFrameSourceListener
     private let dataCaptureContextListener: FrameworksDataCaptureContextListener
@@ -322,13 +322,8 @@ open class CoreModule: NSObject, FrameworkModule {
     public func switchCameraToDesiredState(stateJson: String, result: FrameworksResult) {
         var state = FrameSourceState.off
         SDCFrameSourceStateFromJSONString(stateJson, &state)
-        frameSourceDeserializer.switchCameraToState(newState: state) { success in
-            if (success) {
-                result.success(result: nil)
-            } else {
-                result.reject(code: "-1", message: "Unable to switch the camera to \(stateJson).", details: nil)
-            }
-        }
+        frameSourceDeserializer.switchCameraToState(newState: state)
+        result.success(result: nil)
     }
     
     public func addModeToContext(modeJson: String, result: FrameworksResult) {
@@ -381,7 +376,6 @@ open class CoreModule: NSObject, FrameworkModule {
             do {
                 let view = try deserializers.dataCaptureViewDeserializer.view(fromJSONString: viewJson, with: dcContext)
                 onViewDeserialized(view)
-                result.success(result: nil)
                 return view
             } catch {
                 result.reject(error: error)
@@ -408,15 +402,13 @@ open class CoreModule: NSObject, FrameworkModule {
         dataCaptureView.removeListener(dataCaptureViewListener)
         if let index = dataCaptureViewInstances.firstIndex(of: dataCaptureView) {
             dataCaptureViewInstances.remove(at: index)
-            dataCaptureView.removeFromSuperview()
         }
     }
 
     private func removeTopMostDataCaptureView() {
         if let view = dataCaptureViewInstances.last {
-            dataCaptureViewInstances.removeLast()
-            view.removeFromSuperview()
             view.removeListener(dataCaptureViewListener)
+            dataCaptureViewInstances.removeLast()
         }
     }
 
