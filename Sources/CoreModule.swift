@@ -61,7 +61,7 @@ public enum ScanditFrameworksCoreError: Error, CustomNSError {
     }
 }
 
-open class CoreModule: NSObject, FrameworkModule {
+public class CoreModule: NSObject, FrameworkModule {
     private let frameSourceDeserializer: FrameworksFrameSourceDeserializer
     private let frameSourceListener: FrameworksFrameSourceListener
     private let dataCaptureContextListener: FrameworksDataCaptureContextListener
@@ -376,7 +376,6 @@ open class CoreModule: NSObject, FrameworkModule {
             do {
                 let view = try deserializers.dataCaptureViewDeserializer.view(fromJSONString: viewJson, with: dcContext)
                 onViewDeserialized(view)
-                result.success(result: nil)
                 return view
             } catch {
                 result.reject(error: error)
@@ -403,15 +402,13 @@ open class CoreModule: NSObject, FrameworkModule {
         dataCaptureView.removeListener(dataCaptureViewListener)
         if let index = dataCaptureViewInstances.firstIndex(of: dataCaptureView) {
             dataCaptureViewInstances.remove(at: index)
-            dataCaptureView.removeFromSuperview()
         }
     }
 
     private func removeTopMostDataCaptureView() {
         if let view = dataCaptureViewInstances.last {
-            dataCaptureViewInstances.removeLast()
-            view.removeFromSuperview()
             view.removeListener(dataCaptureViewListener)
+            dataCaptureViewInstances.removeLast()
         }
     }
 
