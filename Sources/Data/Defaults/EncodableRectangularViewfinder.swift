@@ -8,56 +8,22 @@ import Foundation
 import ScanditCaptureCore
 
 struct EncodableRectangularViewfinder: DefaultsEncodable {
-    init(
-        size: String,
-        color: UIColor,
-        style: String,
-        lineStyle: String,
-        dimming: CGFloat,
-        animation: RectangularViewfinderAnimation? = nil,
-        disabledDimming: CGFloat,
-        disabledColor: UIColor
-    ) {
-        self.size = size
-        self.color = color
-        self.style = style
-        self.lineStyle = lineStyle
-        self.dimming = dimming
-        self.animation = animation
-        self.disabledDimming = disabledDimming
-        self.disabledColor = disabledColor
-    }
-    
-    private let size: String
-    private let color: UIColor
-    private let style: String
-    private let lineStyle: String
-    private let dimming: CGFloat
-    private let animation: RectangularViewfinderAnimation?
-    private let disabledDimming: CGFloat
-    private let disabledColor: UIColor
+    private let viewfinder: RectangularViewfinder
 
     init(viewfinder: RectangularViewfinder) {
-        size = viewfinder.sizeWithUnitAndAspect.jsonString
-        color = viewfinder.color
-        style = viewfinder.style.jsonString
-        lineStyle = viewfinder.lineStyle.jsonString
-        dimming = viewfinder.dimming
-        animation = viewfinder.animation
-        disabledDimming = viewfinder.disabledDimming
-        disabledColor = viewfinder.disabledColor
+        self.viewfinder = viewfinder
     }
 
     func toEncodable() -> [String: Any?] {
         [
-            "size":             size,
-            "color":            color.sdcHexString,
-            "style":            style,
-            "lineStyle":        lineStyle,
-            "dimming":          dimming,
-            "animation":        animation?.jsonString,
-            "disabledDimming":  disabledDimming,
-            "disabledColor":    disabledColor.sdcHexString
+            "size": viewfinder.sizeWithUnitAndAspect.jsonString,
+            "color": viewfinder.color.sdcHexString,
+            "style": viewfinder.style.jsonString,
+            "lineStyle": viewfinder.lineStyle.jsonString,
+            "dimming": viewfinder.dimming,
+            "animation": viewfinder.animation?.jsonString,
+            "disabledDimming": viewfinder.disabledDimming,
+            "disabledColor": viewfinder.disabledColor.sdcHexString
         ]
     }
 }
