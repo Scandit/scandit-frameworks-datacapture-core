@@ -158,7 +158,9 @@ open class CoreModule: NSObject, FrameworkModule {
                                                                                                 components: [],
                                                                                                 fromJSON: json)
 
-                if let deserializedView = updateResult.view {
+                let deserializedView = updateResult.view
+                
+                if currentViewInstance == nil, let deserializedView = deserializedView {
                     self.onViewDeserialized(deserializedView)
                 }
                 result.success(result: nil)
@@ -309,6 +311,9 @@ open class CoreModule: NSObject, FrameworkModule {
 
     public func unregisterDataCaptureViewListener() {
         dataCaptureViewListener.disable()
+        if let view = dataCaptureView {
+            dataCaptureViewDisposed(view)
+        }
     }
 
     public func registerFrameSourceListener() {
@@ -408,14 +413,18 @@ open class CoreModule: NSObject, FrameworkModule {
         dataCaptureView.removeListener(dataCaptureViewListener)
         if let index = dataCaptureViewInstances.firstIndex(of: dataCaptureView) {
             dataCaptureViewInstances.remove(at: index)
-            dataCaptureView.removeFromSuperview()
+            dispatchMain {
+                dataCaptureView.removeFromSuperview()
+            }
         }
     }
 
     private func removeTopMostDataCaptureView() {
         if let view = dataCaptureViewInstances.last {
             dataCaptureViewInstances.removeLast()
-            view.removeFromSuperview()
+            dispatchMain {
+                view.removeFromSuperview()
+            }
             view.removeListener(dataCaptureViewListener)
         }
     }
