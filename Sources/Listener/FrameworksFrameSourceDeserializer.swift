@@ -43,6 +43,10 @@ open class FrameworksFrameSourceDeserializer: NSObject {
 
     public func switchCameraToState(newState: FrameSourceState, completionHandler: ((Bool) -> Void)?) {
         self.cameraDesiredState = newState
+        if camera == nil && imageFrameSource == nil {
+            completionHandler?(true)
+            return
+        }
         camera?.switch(toDesiredState: newState, completionHandler: completionHandler)
         imageFrameSource?.switch(toDesiredState: newState, completionHandler: completionHandler)
     }
