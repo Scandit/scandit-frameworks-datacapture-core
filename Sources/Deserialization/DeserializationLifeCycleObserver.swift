@@ -12,11 +12,12 @@ public protocol DeserializationLifeCycleObserver: NSObjectProtocol {
     @objc optional func didDisposeDataCaptureContext()
     @objc optional func dataCaptureContext(deserialized context: DataCaptureContext?)
     @objc optional func dataCaptureView(deserialized view: DataCaptureView?)
-    @objc optional func dataCaptureView(removed view: DataCaptureView)
     @objc optional func dataCaptureContext(addMode modeJson: String) throws
     @objc optional func dataCaptureContext(removeMode modeJson: String)
     @objc optional func dataCaptureContextAllModeRemoved()
-    @objc optional func dataCaptureView(addOverlay overlayJson: String, to view: DataCaptureView) throws
+    @objc optional func dataCaptureView(addOverlay overlayJson: String) throws
+    @objc optional func dataCaptureView(removeOverlay overlayJson: String)
+    @objc optional func dataCaptureViewRemoveAllOverlays()
 }
 
 public final class DeserializationLifeCycleDispatcher {
@@ -46,14 +47,6 @@ public final class DeserializationLifeCycleDispatcher {
         observers.compactMap { $0 as? DeserializationLifeCycleObserver }.forEach {
             if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureView(deserialized:))) {
                 $0.dataCaptureView!(deserialized: view)
-            }
-        }
-    }
-    
-    public func dispatchDataCaptureViewRemoved(view: DataCaptureView) {
-        observers.compactMap { $0 as? DeserializationLifeCycleObserver }.forEach {
-            if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureView(removed:))) {
-                $0.dataCaptureView!(removed: view)
             }
         }
     }
@@ -90,10 +83,26 @@ public final class DeserializationLifeCycleDispatcher {
         }
     }
     
-    func dispatchAddOverlayToView(view: DataCaptureView, overlayJson: String) throws {
+    func dispatchAddOverlayToView(overlayJson: String) throws {
         try observers.compactMap { $0 as? DeserializationLifeCycleObserver }.forEach {
-            if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureView(addOverlay:to:))) {
-                try $0.dataCaptureView!(addOverlay: overlayJson, to: view)
+            if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureView(addOverlay:))) {
+                try $0.dataCaptureView!(addOverlay: overlayJson)
+            }
+        }
+    }
+    
+    func dispatchRemoveOverlayFromView(overlayJson: String)  {
+        observers.compactMap { $0 as? DeserializationLifeCycleObserver }.forEach {
+            if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureView(removeOverlay:))) {
+                $0.dataCaptureView!(removeOverlay: overlayJson)
+            }
+        }
+    }
+    
+    func dispatchRemoveAllOverlays()  {
+        observers.compactMap { $0 as? DeserializationLifeCycleObserver }.forEach {
+            if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureViewRemoveAllOverlays)) {
+                $0.dataCaptureViewRemoveAllOverlays!()
             }
         }
     }
