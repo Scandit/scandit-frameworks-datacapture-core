@@ -90,10 +90,8 @@ open class CoreModule: NSObject, FrameworkModule {
         }
     }
 
-    private var dataCaptureViewInstances = [DataCaptureView]()
-
     var dataCaptureView: DataCaptureView? {
-        return dataCaptureViewInstances.last
+        return DataCaptureViewHandler.shared.topmostDataCaptureView
     }
 
 
@@ -120,13 +118,7 @@ open class CoreModule: NSObject, FrameworkModule {
 
                 let deserializerResult = try self.deserializers.dataCaptureContextDeserializer.context(fromJSONString: json)
                 self.dataCaptureContext = deserializerResult.context
-                if let deserializedView = deserializerResult.view {
-                    self.onViewDeserialized(deserializedView)
-                }
-
-                let isLicenseArFull = deserializerResult.context.isFeatureSupported("barcode-ar-full")
-
-                result.success(result: ["barcode-ar-full": isLicenseArFull])
+                result.success(result: nil)
             } catch {
                 Log.error("Error occurred: \n")
                 Log.error(error)
@@ -147,25 +139,15 @@ open class CoreModule: NSObject, FrameworkModule {
                 self.createContextFromJSON(json, result: result)
                 return
             }
-
+            
             do {
                 self.contextLock.wait()
                 defer { self.contextLock.signal() }
-
-                // This is a workaround in the shared modules to still support platforms that
-                // do create and update the view through the context update function.
-                let currentViewInstance = self.jsonStringContainsKey(json, key: "view") ? self.dataCaptureView : nil
-
-                let updateResult = try self.deserializers.dataCaptureContextDeserializer.update(dataCaptureContext,
-                                                                                                view: currentViewInstance,
+                
+                let _ = try self.deserializers.dataCaptureContextDeserializer.update(dataCaptureContext,
+                                                                                                view: nil,
                                                                                                 components: [],
                                                                                                 fromJSON: json)
-
-                let deserializedView = updateResult.view
-
-                if currentViewInstance == nil, let deserializedView = deserializedView {
-                    self.onViewDeserialized(deserializedView)
-                }
                 result.success(result: nil)
             } catch {
                 Log.error("Error occurred: \n")
@@ -175,7 +157,7 @@ open class CoreModule: NSObject, FrameworkModule {
         }
         dispatchMainSync(block)
     }
-
+    
     func jsonStringContainsKey(_ jsonString: String, key: String) -> Bool {
         guard let jsonData = jsonString.data(using: .utf8) else {
             // Failed to convert the string to data
@@ -284,7 +266,7 @@ open class CoreModule: NSObject, FrameworkModule {
     public func disposeContext() {
         self.contextLock.wait()
         defer { self.contextLock.signal() }
-
+        
         removeAllViews()
         dataCaptureContext?.dispose()
         dataCaptureContext = nil
@@ -293,9 +275,12 @@ open class CoreModule: NSObject, FrameworkModule {
         DeserializationLifeCycleDispatcher.shared.dispatchDataCaptureContextDisposed()
     }
 
-    public func didStart() {}
+    public func didStart() {
+        DeserializationLifeCycleDispatcher.shared.attach(observer: self)
+    }
 
     public func didStop() {
+        DeserializationLifeCycleDispatcher.shared.detach(observer: self)
         Deserializers.Factory.clearDeserializers()
         disposeContext()
     }
@@ -314,9 +299,6 @@ open class CoreModule: NSObject, FrameworkModule {
 
     public func unregisterDataCaptureViewListener() {
         dataCaptureViewListener.disable()
-        if let view = dataCaptureView {
-            dataCaptureViewDisposed(view)
-        }
     }
 
     public func registerFrameSourceListener() {
@@ -326,7 +308,7 @@ open class CoreModule: NSObject, FrameworkModule {
     public func unregisterFrameSourceListener() {
         frameSourceListener.disable()
     }
-
+    
     public func switchCameraToDesiredState(stateJson: String, result: FrameworksResult) {
         var state = FrameSourceState.off
         SDCFrameSourceStateFromJSONString(stateJson, &state)
@@ -338,7 +320,7 @@ open class CoreModule: NSObject, FrameworkModule {
             }
         }
     }
-
+    
     public func addModeToContext(modeJson: String, result: FrameworksResult) {
         do {
             try  DeserializationLifeCycleDispatcher.shared.dispatchAddModeToContext(modeJson: modeJson)
@@ -358,37 +340,30 @@ open class CoreModule: NSObject, FrameworkModule {
         DeserializationLifeCycleDispatcher.shared.dispatchAllModesRemovedFromContext()
         result.success(result: nil)
     }
-
-    public func addOverlayToView(overlayJson: String, result: FrameworksResult) {
-        do {
-            try  DeserializationLifeCycleDispatcher.shared.dispatchAddOverlayToView(overlayJson: overlayJson)
-            result.success(result: nil)
-        } catch  {
-            result.reject(error: error)
-        }
-    }
-
-    public func removeOverlayFromView(overlayJson: String, result: FrameworksResult) {
-        DeserializationLifeCycleDispatcher.shared.dispatchRemoveOverlayFromView(overlayJson: overlayJson)
-        result.success(result: nil)
-    }
-
-    public func removeAllOverlays(result: FrameworksResult) {
-        dataCaptureContext?.removeAllModes()
-        DeserializationLifeCycleDispatcher.shared.dispatchRemoveAllOverlays()
-        result.success(result: nil)
-    }
-
+    
     public func createDataCaptureView(viewJson: String, result: FrameworksResult) -> DataCaptureView? {
         guard let dcContext = dataCaptureContext else {
             result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
             return nil
         }
-
+        
+        let overlays = getOverlaysFromViewJson(viewJson)
+        // remove the overlays key so that the native sdk will not handle them
+        guard let dataCaptureViewJson = removeJsonKey(from: viewJson, key: "overlays") else {
+            result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil, json: viewJson))
+            return nil
+        }
+        
         return dispatchMainSync { () -> DataCaptureView? in
             do {
-                let view = try deserializers.dataCaptureViewDeserializer.view(fromJSONString: viewJson, with: dcContext)
+                let view = try deserializers.dataCaptureViewDeserializer.view(fromJSONString: dataCaptureViewJson, with: dcContext)
                 onViewDeserialized(view)
+                
+                // add overlays
+                for overlay in overlays {
+                    // Add new overlays
+                    try DeserializationLifeCycleDispatcher.shared.dispatchAddOverlayToView(view: view, overlayJson: overlay)
+                }
                 result.success(result: nil)
                 return view
             } catch {
@@ -400,31 +375,96 @@ open class CoreModule: NSObject, FrameworkModule {
 
     public func updateDataCaptureView(viewJson: String, result: FrameworksResult) {
         guard let view = dataCaptureView else {
+            // if the view was not created yet, when it will be created it will just be the updated one
+            result.success()
             return
         }
+        
+        let overlays = getOverlaysFromViewJson(viewJson)
+        // remove the overlays key so that the native sdk will not handle them
+        guard let dataCaptureViewJson = removeJsonKey(from: viewJson, key: "overlays") else {
+            result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil, json: viewJson))
+            return
+        }
+        
+        // update view
         dispatchMainSync {
             do {
-                try deserializers.dataCaptureViewDeserializer.update(view, fromJSONString: viewJson)
-                result.success(result: nil)
+                try deserializers.dataCaptureViewDeserializer.update(view, fromJSONString: dataCaptureViewJson)
             } catch {
                 result.reject(error: error)
+                return
             }
         }
+        
+        // remove existing overlays
+        DataCaptureViewHandler.shared.removeAllOverlaysFromView(view)
+        
+        // add overlays
+        do {
+            for overlay in overlays {
+                // Add new overlays
+                try DeserializationLifeCycleDispatcher.shared.dispatchAddOverlayToView(view: view, overlayJson: overlay)
+            }
+            result.success(result: nil)
+        } catch  {
+            result.reject(error: error)
+        }
+    }
+    
+    private func getOverlaysFromViewJson(_ viewJson: String) -> [String] {
+        var overlays = [String]()
+
+        if let data = viewJson.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+            
+            if let overlaysJson = json["overlays"] as? [[String: Any]] {
+                for overlay in overlaysJson {
+                    if let overlayData = try? JSONSerialization.data(withJSONObject: overlay, options: []),
+                       let overlayString = String(data: overlayData, encoding: .utf8) {
+                        overlays.append(overlayString)
+                    }
+                }
+            }
+        }
+
+        return overlays
+    }
+    
+    private func removeJsonKey(from jsonString: String, key: String) -> String? {
+        guard let data = jsonString.data(using: .utf8) else {
+            return nil
+        }
+        
+        guard var json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+            return nil
+        }
+        
+        json.removeValue(forKey: key)
+        
+        guard let updatedData = try? JSONSerialization.data(withJSONObject: json, options: []),
+              let updatedJsonString = String(data: updatedData, encoding: .utf8) else {
+            return nil
+        }
+        
+        return updatedJsonString
     }
 
     public func dataCaptureViewDisposed(_ dataCaptureView: DataCaptureView) {
         dataCaptureView.removeListener(dataCaptureViewListener)
-        if let index = dataCaptureViewInstances.firstIndex(of: dataCaptureView) {
-            dataCaptureViewInstances.remove(at: index)
+        if let _ = DataCaptureViewHandler.shared.removeView(dataCaptureView) {
             dispatchMain {
                 dataCaptureView.removeFromSuperview()
             }
         }
     }
+    
+    public func disposeDataCaptureView() {
+        removeTopMostDataCaptureView()
+    }
 
     private func removeTopMostDataCaptureView() {
-        if let view = dataCaptureViewInstances.last {
-            dataCaptureViewInstances.removeLast()
+        if let view = DataCaptureViewHandler.shared.removeTopmostView() {
             dispatchMain {
                 view.removeFromSuperview()
             }
@@ -434,15 +474,22 @@ open class CoreModule: NSObject, FrameworkModule {
 
     private func onViewDeserialized(_ dataCaptureView: DataCaptureView) {
         dataCaptureView.addListener(dataCaptureViewListener)
-        dataCaptureViewInstances.append(dataCaptureView)
+        DataCaptureViewHandler.shared.addView(dataCaptureView)
         DeserializationLifeCycleDispatcher.shared.dispatchDataCaptureViewDeserialized(view: dataCaptureView)
     }
 
     private func removeAllViews() {
-        for view in dataCaptureViewInstances {
+        for view in DataCaptureViewHandler.shared.removeAllViews() {
             view.removeListener(dataCaptureViewListener)
         }
-        dataCaptureViewInstances.removeAll()
     }
+}
 
+extension CoreModule: DeserializationLifeCycleObserver {
+    public func dataCaptureView(removed view: DataCaptureView) {
+        view.removeListener(dataCaptureViewListener)
+        _ = DataCaptureViewHandler.shared.removeView(view)
+        // dispatch that the view has been removed
+        DeserializationLifeCycleDispatcher.shared.dispatchDataCaptureViewDeserialized(view: nil)
+    }
 }
