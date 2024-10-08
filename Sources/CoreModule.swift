@@ -118,7 +118,10 @@ open class CoreModule: NSObject, FrameworkModule {
 
                 let deserializerResult = try self.deserializers.dataCaptureContextDeserializer.context(fromJSONString: json)
                 self.dataCaptureContext = deserializerResult.context
-                result.success(result: nil)
+                
+                let isLicenseArFull = deserializerResult.context.isFeatureSupported("barcode-ar-full")
+                
+                result.success(result: ["barcode-ar-full": isLicenseArFull])
             } catch {
                 Log.error("Error occurred: \n")
                 Log.error(error)
