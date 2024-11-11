@@ -119,6 +119,8 @@ open class CoreModule: NSObject, FrameworkModule {
                 let deserializerResult = try self.deserializers.dataCaptureContextDeserializer.context(fromJSONString: json)
                 self.dataCaptureContext = deserializerResult.context
                 
+                LastFrameData.shared.configure(configuration: FramesHandlingConfiguration.create(contextCreationJson: json))
+                
                 let isLicenseArFull = deserializerResult.context.isFeatureSupported("barcode-ar-full")
                 
                 result.success(result: ["barcode-ar-full": isLicenseArFull])
@@ -151,6 +153,9 @@ open class CoreModule: NSObject, FrameworkModule {
                                                                                                 view: nil,
                                                                                                 components: [],
                                                                                                 fromJSON: json)
+                
+                LastFrameData.shared.configure(configuration: FramesHandlingConfiguration.create(contextCreationJson: json))
+                
                 result.success(result: nil)
             } catch {
                 Log.error("Error occurred: \n")
@@ -274,7 +279,7 @@ open class CoreModule: NSObject, FrameworkModule {
         dataCaptureContext?.dispose()
         dataCaptureContext = nil
         frameSourceDeserializer.releaseCurrentCamera()
-        LastFrameData.shared.frameData = nil
+        LastFrameData.shared.release()
         DeserializationLifeCycleDispatcher.shared.dispatchDataCaptureContextDisposed()
     }
 
@@ -335,6 +340,7 @@ open class CoreModule: NSObject, FrameworkModule {
 
     public func removeModeFromContext(modeJson: String, result: FrameworksResult) {
         DeserializationLifeCycleDispatcher.shared.dispatchRemoveModeFromContext(modeJson: modeJson)
+        LastFrameData.shared.release()
         result.success(result: nil)
     }
 
@@ -484,6 +490,16 @@ open class CoreModule: NSObject, FrameworkModule {
     private func removeAllViews() {
         for view in DataCaptureViewHandler.shared.removeAllViews() {
             view.removeListener(dataCaptureViewListener)
+        }
+    }
+    
+    public func getOpenSourceSoftwareLicenseInfo(result: FrameworksResult) {
+        result.success(result: DataCaptureContext.openSourceSoftwareLicenseInfo.licenseText)
+    }
+    
+    public func getLastFrameAsJson(frameId: String, result: FrameworksResult) {
+        LastFrameData.shared.getLastFrameDataJSON(frameId: frameId) {
+            result.success(result: $0)
         }
     }
 }
