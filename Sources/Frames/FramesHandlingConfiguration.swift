@@ -7,8 +7,6 @@
 import Foundation
 import ScanditCaptureCore
 
-import Foundation
-
 public class FramesHandlingConfiguration {
 
     let isFileSystemCacheEnabled: Bool
