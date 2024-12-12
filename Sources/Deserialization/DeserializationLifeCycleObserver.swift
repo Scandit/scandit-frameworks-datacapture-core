@@ -21,6 +21,8 @@ public protocol DeserializationLifeCycleObserver: NSObjectProtocol {
 
 public final class DeserializationLifeCycleDispatcher {
     public static let shared = DeserializationLifeCycleDispatcher()
+    
+    private var context: DataCaptureContext?
 
     private init() {}
 
@@ -28,6 +30,9 @@ public final class DeserializationLifeCycleDispatcher {
 
     public func attach(observer: DeserializationLifeCycleObserver) {
         observers.add(observer)
+        if observer.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureContext(deserialized:))) {
+            observer.dataCaptureContext!(deserialized: self.context)
+        }
     }
 
     public func detach(observer: DeserializationLifeCycleObserver) {
@@ -35,6 +40,7 @@ public final class DeserializationLifeCycleDispatcher {
     }
 
     func dispatchDataCaptureContextDeserialized(context: DataCaptureContext?) {
+        self.context = context
         observers.compactMap { $0 as? DeserializationLifeCycleObserver }.forEach {
             if $0.responds(to: #selector(DeserializationLifeCycleObserver.dataCaptureContext(deserialized:))) {
                 $0.dataCaptureContext!(deserialized: context)
