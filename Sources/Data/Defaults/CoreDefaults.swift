@@ -33,7 +33,7 @@ struct EncodableLaserlineViewFinder: DefaultsEncodable {
     }
 }
 
-extension RectangularViewfinderStyle: CaseIterable {
+extension ScanditCaptureCore.RectangularViewfinderStyle: Swift.CaseIterable {
     public static var allCases: [RectangularViewfinderStyle] {
         [ .rounded, .square]
     }
@@ -44,7 +44,7 @@ struct RectangularViewfinderDefaults: DefaultsEncodable {
         let allViewFinders = Dictionary(uniqueKeysWithValues: RectangularViewfinderStyle.allCases.map {
             ($0.jsonString, EncodableRectangularViewfinder(viewfinder: RectangularViewfinder(style: $0)).toEncodable())
         })
-        
+
         return [
             "defaultStyle": RectangularViewfinderStyle.rounded.jsonString,
             "styles": allViewFinders
@@ -52,7 +52,7 @@ struct RectangularViewfinderDefaults: DefaultsEncodable {
     }
 }
 
-extension CameraPosition: CaseIterable {
+extension ScanditCaptureCore.CameraPosition: Swift.CaseIterable {
     public static var allCases: [CameraPosition] {
         [.worldFacing, .userFacing, .unspecified]
     }
